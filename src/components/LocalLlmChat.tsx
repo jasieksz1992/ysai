@@ -7,8 +7,24 @@ import type { ChatMessage } from '@/hooks/useLocalLlm'
 const storageKey = 'ysai-local-llm-chat-history'
 const systemPrompt: ChatMessage = {
   role: 'system',
-  content: 'You are a helpful local AI assistant. Answer clearly and practically.'
+  content: `You are Your site AI: a premium, practical assistant for users building and improving websites, apps, and digital products.
+
+Communication rules:
+- Match the user's language. If the user writes in Polish, answer in clear, natural Polish.
+- Be understandable: start with the direct answer, use short sections, bullets, and concrete next steps.
+- Avoid vague wording and unnecessary technical jargon; explain terms when they matter.
+- Do not mention internal hosting, privacy, local inference, API routes, Firebase static export, backend details, or model/runtime names unless the user explicitly asks about implementation.
+- Never write generic marketing/privacy boilerplate to the user; focus on the actual answer and useful next steps.
+
+Core skills:
+- JavaScript: write, debug, refactor, and explain modern JS for browsers, Node.js, and UI logic.
+- TypeScript: design typed APIs, fix compiler errors, improve types, and explain TS decisions clearly.
+- Frontend: help with React, Next.js, component structure, accessibility, forms, and state management.
+- UI/UX: propose premium layouts, copy, hierarchy, spacing, and interaction improvements.
+- Practical delivery: when coding, provide concise snippets, mention assumptions, and include test or verification steps.`
 }
+
+const assistantSkills = ['JavaScript', 'TypeScript', 'React / Next.js', 'UI premium', 'Debugowanie']
 
 export default function LocalLlmChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -16,7 +32,6 @@ export default function LocalLlmChat() {
   const [storageLoaded, setStorageLoaded] = useState(false)
   const endRef = useRef<HTMLDivElement | null>(null)
   const {
-    modelId,
     loadState,
     progress,
     progressText,
@@ -55,18 +70,18 @@ export default function LocalLlmChat() {
 
   const statusText = useMemo(() => {
     if (hasWebGpu === false) {
-      return 'WebGPU nie jest dostępne w tej przeglądarce.'
+      return 'Ta przeglądarka nie obsługuje wymaganej akceleracji.'
     }
     if (loadState === 'ready') {
-      return 'Model lokalny jest gotowy.'
+      return 'Your site AI jest gotowy do rozmowy.'
     }
     if (loadState === 'loading') {
-      return 'Model ładuje się lokalnie w przeglądarce.'
+      return 'Przygotowuję asystenta do pracy.'
     }
     if (loadState === 'error') {
-      return 'Wystąpił błąd podczas pracy z modelem.'
+      return 'Wystąpił błąd podczas uruchamiania asystenta.'
     }
-    return 'Kliknij przycisk, aby ręcznie załadować model.'
+    return 'Uruchom asystenta i rozpocznij rozmowę.'
   }, [hasWebGpu, loadState])
 
   const canSend = loadState === 'ready' && input.trim().length > 0 && !isGenerating
@@ -107,7 +122,7 @@ export default function LocalLlmChat() {
         if (lastMessage?.role === 'assistant' && !lastMessage.content) {
           updated[updated.length - 1] = {
             role: 'assistant',
-            content: 'Przepraszam, nie udało się wygenerować odpowiedzi lokalnie.'
+            content: 'Przepraszam, nie udało się przygotować odpowiedzi. Spróbuj ponownie za chwilę.'
           }
         }
         return updated
@@ -121,21 +136,26 @@ export default function LocalLlmChat() {
 
   return (
     <main className="app-shell">
-      <section className="chat-card" aria-label="Lokalny czat AI">
+      <section className="chat-card" aria-label="Your site AI chat">
         <header className="chat-header">
           <div className="header-copy">
-            <p className="eyebrow">WebLLM bez backendu</p>
-            <h1>Lokalny Asystent AI</h1>
+            <p className="eyebrow">Premium assistant for web teams</p>
+            <h1>Your site AI</h1>
             <p className="subtitle">
-              Darmowy czat z modelem {modelId}, uruchamiany w całości w Twojej przeglądarce i eksportowany jako statyczna strona dla Firebase Hosting.
+              Rozmawiaj o produktach cyfrowych, kodzie i jakości interfejsu z asystentem, który odpowiada konkretnie, jasno i praktycznie.
             </p>
+            <div className="skill-list" aria-label="Umiejętności asystenta">
+              {assistantSkills.map(skill => (
+                <span className="skill-chip" key={skill}>{skill}</span>
+              ))}
+            </div>
           </div>
           <div className="header-actions">
             <button className="button" type="button" onClick={loadModel} disabled={loadState === 'loading' || loadState === 'ready' || hasWebGpu === false}>
-              {loadState === 'ready' ? 'Model załadowany' : loadState === 'loading' ? 'Ładowanie...' : 'Załaduj model'}
+              {loadState === 'ready' ? 'Gotowy' : loadState === 'loading' ? 'Uruchamianie...' : 'Uruchom AI'}
             </button>
             <button className="button danger" type="button" onClick={clearChat} disabled={messages.length === 0 || isGenerating}>
-              Wyczyść czat
+              Wyczyść
             </button>
           </div>
         </header>
@@ -144,14 +164,14 @@ export default function LocalLlmChat() {
             <span>{statusText}</span>
             <strong>{Math.round(progress * 100)}%</strong>
           </div>
-          <div className="progress-track" aria-label="Postęp ładowania modelu">
+          <div className="progress-track" aria-label="Postęp uruchamiania asystenta">
             <div className="progress-bar" style={{ width: `${Math.round(progress * 100)}%` }} />
           </div>
           <div className="notice">
-            Prywatność: prompt i odpowiedzi nie są wysyłane do API. Inferencja działa lokalnie w przeglądarce, a historia jest zapisywana tylko w localStorage tego urządzenia.
+            Tip: zadawaj pytania z kontekstem, np. „napisz komponent w TypeScript” albo „popraw UX formularza logowania”.
           </div>
           {hasWebGpu === false ? (
-            <div className="notice warning">WebGPU nie jest obsługiwane. Bez WebGPU lokalny model WebLLM nie może zostać uruchomiony.</div>
+            <div className="notice warning">Uruchomienie wymaga nowszej przeglądarki z obsługą akceleracji WebGPU.</div>
           ) : null}
           {loadState === 'loading' ? <div className="notice warning">{progressText}</div> : null}
           {error ? <div className="notice error">Błąd: {error}</div> : null}
@@ -159,13 +179,13 @@ export default function LocalLlmChat() {
         <div className="messages" aria-live="polite">
           {messages.length === 0 ? (
             <div className="empty-state">
-              <strong>Brak wiadomości</strong>
-              <span>Załaduj model, wpisz pytanie i rozpocznij lokalną rozmowę. Pierwsze ładowanie może potrwać dłużej, bo model pobiera się do pamięci podręcznej przeglądarki.</span>
+              <strong>Gotowy do pracy nad Twoją stroną</strong>
+              <span>Zadaj pytanie o JavaScript, TypeScript, React, Next.js albo dopracowanie UI. Asystent odpowie krótko, konkretnie i krok po kroku.</span>
             </div>
           ) : (
             messages.map((message, index) => (
               <article className={`message ${message.role}`} key={`${message.role}-${index}`}>
-                <span className="message-label">{message.role === 'user' ? 'Ty' : 'Asystent'}</span>
+                <span className="message-label">{message.role === 'user' ? 'Ty' : 'Your site AI'}</span>
                 {message.content || 'Piszę odpowiedź...'}
               </article>
             ))
@@ -177,7 +197,7 @@ export default function LocalLlmChat() {
             <textarea
               value={input}
               onChange={event => setInput(event.target.value)}
-              placeholder={loadState === 'ready' ? 'Napisz wiadomość...' : 'Najpierw załaduj lokalny model...'}
+              placeholder={loadState === 'ready' ? 'Napisz, co chcesz zbudować albo poprawić...' : 'Najpierw uruchom Your site AI...'}
               disabled={loadState !== 'ready' || isGenerating}
               aria-label="Treść wiadomości"
             />
@@ -191,7 +211,6 @@ export default function LocalLlmChat() {
               </button>
             )}
           </div>
-          <p className="helper-text">Aplikacja nie zawiera tras API, akcji serwerowych ani kluczy API. Firebase służy wyłącznie do hostowania statycznych plików z katalogu out.</p>
         </form>
       </section>
     </main>
