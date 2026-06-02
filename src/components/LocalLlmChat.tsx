@@ -24,10 +24,11 @@ Core skills:
 - TypeScript: design typed APIs, fix compiler errors, improve types, and explain TS decisions clearly.
 - Frontend: help with React, Next.js, component structure, accessibility, forms, and state management.
 - UI/UX: propose premium layouts, copy, hierarchy, spacing, and interaction improvements.
+- AI photo direction: create high-quality photographic concepts, image prompts, shot lists, style notes, and production-ready descriptions for generated visuals.
 - Practical delivery: when coding, provide concise snippets, mention assumptions, and include test or verification steps.`
 }
 
-const assistantSkills = ['JavaScript', 'TypeScript', 'React / Next.js', 'UI premium', 'Debugowanie']
+const assistantSkills = ['JavaScript', 'TypeScript', 'React / Next.js', 'UI premium', 'Zdjęcia AI', 'Debugowanie']
 
 type AuthStep = 'idle' | 'email' | 'password'
 
