@@ -1,7 +1,7 @@
-import { initializeApp, getApps, type FirebaseApp, type FirebaseOptions } from 'firebase/app'
+import { getApp, getApps, initializeApp, type FirebaseApp } from 'firebase/app'
 import { getAuth, type Auth } from 'firebase/auth'
 
-const firebaseConfig: FirebaseOptions = {
+const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
@@ -12,31 +12,31 @@ const firebaseConfig: FirebaseOptions = {
 
 export const hasFirebaseConfig = Boolean(
   firebaseConfig.apiKey &&
-    firebaseConfig.authDomain &&
-    firebaseConfig.projectId &&
-    firebaseConfig.appId
+  firebaseConfig.authDomain &&
+  firebaseConfig.projectId &&
+  firebaseConfig.appId
 )
 
-let firebaseApp: FirebaseApp | null = null
-let firebaseAuth: Auth | null = null
+let cachedAuth: Auth | null = null
 
-const getFirebaseApp = () => {
+const getFirebaseApp = (): FirebaseApp | null => {
   if (!hasFirebaseConfig) {
     return null
   }
-  if (!firebaseApp) {
-    firebaseApp = getApps().length > 0 ? getApps()[0] : initializeApp(firebaseConfig)
-  }
-  return firebaseApp
+
+  return getApps().length > 0 ? getApp() : initializeApp(firebaseConfig)
 }
 
-export const getFirebaseAuth = () => {
-  if (!hasFirebaseConfig) {
+export const getFirebaseAuth = (): Auth | null => {
+  if (cachedAuth) {
+    return cachedAuth
+  }
+
+  const app = getFirebaseApp()
+  if (!app) {
     return null
   }
-  if (!firebaseAuth) {
-    const app = getFirebaseApp()
-    firebaseAuth = app ? getAuth(app) : null
-  }
-  return firebaseAuth
+
+  cachedAuth = getAuth(app)
+  return cachedAuth
 }

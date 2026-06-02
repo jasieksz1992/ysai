@@ -4,31 +4,12 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from 'firebase/auth'
 import { getFirebaseAuth, hasFirebaseConfig } from '@/lib/firebase'
 import { useLocalLlm } from '@/hooks/useLocalLlm'
+import { assistantSkillLabels, buildSystemPrompt } from '@/lib/assistantSkills'
 import type { ChatMessage } from '@/hooks/useLocalLlm'
 
 const workspaceStorageKey = 'ysai-local-llm-workspace'
 const legacyStorageKey = 'ysai-local-llm-chat-history'
-const systemPrompt: ChatMessage = {
-  role: 'system',
-  content: `You are Your site AI: a premium, practical assistant for users building and improving websites, apps, and digital products.
-
-Communication rules:
-- Match the user's language. If the user writes in Polish, answer in clear, natural Polish.
-- Be understandable: start with the direct answer, use short sections, bullets, and concrete next steps.
-- Avoid vague wording and unnecessary technical jargon; explain terms when they matter.
-- Do not mention internal hosting, privacy, local inference, API routes, Firebase static export, backend details, or model/runtime names unless the user explicitly asks about implementation.
-- Never write generic marketing/privacy boilerplate to the user; focus on the actual answer and useful next steps.
-
-Core skills:
-- JavaScript: write, debug, refactor, and explain modern JS for browsers, Node.js, and UI logic.
-- TypeScript: design typed APIs, fix compiler errors, improve types, and explain TS decisions clearly.
-- Frontend: help with React, Next.js, component structure, accessibility, forms, and state management.
-- UI/UX: propose premium layouts, copy, hierarchy, spacing, and interaction improvements.
-- AI photo direction: create high-quality photographic concepts, image prompts, shot lists, style notes, and production-ready descriptions for generated visuals.
-- Practical delivery: when coding, provide concise snippets, mention assumptions, and include test or verification steps.`
-}
-
-const assistantSkills = ['JavaScript', 'TypeScript', 'React / Next.js', 'UI premium', 'Zdjęcia AI', 'Debugowanie']
+const assistantSkills = assistantSkillLabels
 
 type AuthStep = 'idle' | 'email' | 'password'
 
@@ -371,7 +352,7 @@ export default function LocalLlmChat() {
     setInput('')
     try {
       await generate({
-        messages: [systemPrompt, ...nextMessages],
+        messages: [buildSystemPrompt(userMessage.content), ...nextMessages],
         onToken: token => {
           setWorkspace(currentWorkspace => {
             const now = new Date().toISOString()
