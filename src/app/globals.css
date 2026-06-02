@@ -229,7 +229,7 @@ h1 {
 }
 
 .messages {
-  min-height: 390px;
+  max-height: 250px;
   padding: 34px;
   overflow-y: auto;
   display: flex;
@@ -530,7 +530,7 @@ textarea:focus {
 
 .workspace-card .chat-card {
   min-width: 0;
-  min-height: calc(100vh - 64px);
+  max-height: calc(100vh - 128px);
   border: 0;
   border-radius: 0;
   box-shadow: none;

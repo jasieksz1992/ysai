@@ -59,7 +59,7 @@ cp .firebaserc.example .firebaserc
 
 ```bash
 npx firebase login
-```
+```[package.json](package.json)
 
 ## Deploy do Firebase Hosting
 
@@ -68,7 +68,7 @@ npm run build
 npm run deploy
 ```
 
-Skrypt `deploy` uruchamia `firebase deploy --only hosting`. Plik `firebase.json` wskazuje katalog `out` jako publiczny katalog hostingu.
+Skrypt `deploy` uruchamia `firebase deploy --o[package.json](package.json)nly hosting`. Plik `firebase.json` wskazuje katalog `out` jako publiczny katalog hostingu.
 
 ## Struktura
 

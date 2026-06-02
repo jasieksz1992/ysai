@@ -25,8 +25,6 @@ Core skills:
 - Practical delivery: when coding, provide concise snippets, mention assumptions, and include test or verification steps.`
 }
 
-const assistantSkills = ['JavaScript', 'TypeScript', 'React / Next.js', 'UI premium', 'Debugowanie']
-
 type StoredChat = {
   id: string
   title: string
@@ -425,28 +423,26 @@ export default function LocalLlmChat() {
                 <small>{project.chats.length} chat{project.chats.length === 1 ? '' : 'y'}</small>
               </button>
             ))}
-          </div>
-
-          <div className="sidebar-section chat-history-header">
-            <h3>Chaty w projekcie</h3>
-            <button className="button secondary sidebar-button" type="button" onClick={createNewChat} disabled={isGenerating}>
-              + Nowy chat
-            </button>
-          </div>
-
-          <div className="chat-list">
-            {activeProject?.chats.map(chat => (
-              <button
-                className={`chat-item ${chat.id === activeChat?.id ? 'active' : ''}`}
-                key={chat.id}
-                type="button"
-                onClick={() => selectChat(chat.id)}
-                disabled={isGenerating}
-              >
-                <span>{chat.title}</span>
-                <small>{chat.messages.length} wiadomości</small>
+            <div className="sidebar-section chat-history-header">
+              <h3>Chaty w projekcie</h3>
+              <button className="button secondary sidebar-button" type="button" onClick={createNewChat} disabled={isGenerating}>
+                + Nowy chat
               </button>
-            ))}
+            </div>
+            <div className="chat-list">
+              {activeProject?.chats.map(chat => (
+                  <button
+                      className={`chat-item ${chat.id === activeChat?.id ? 'active' : ''}`}
+                      key={chat.id}
+                      type="button"
+                      onClick={() => selectChat(chat.id)}
+                      disabled={isGenerating}
+                  >
+                    <span>{chat.title}</span>
+                    <small>{chat.messages.length} wiadomości</small>
+                  </button>
+              ))}
+            </div>
           </div>
         </aside>
 
@@ -458,11 +454,6 @@ export default function LocalLlmChat() {
               <p className="subtitle">
                 Rozmawiaj o produktach cyfrowych, kodzie i jakości interfejsu. AI startuje automatycznie, a każdy projekt ma własne zapisane chaty.
               </p>
-              <div className="skill-list" aria-label="Umiejętności asystenta">
-                {assistantSkills.map(skill => (
-                  <span className="skill-chip" key={skill}>{skill}</span>
-                ))}
-              </div>
             </div>
             <div className="header-actions">
               <button className="button secondary" type="button" onClick={loadModel} disabled={loadState === 'loading' || loadState === 'ready' || hasWebGpu === false}>
@@ -478,14 +469,11 @@ export default function LocalLlmChat() {
           </header>
           <div className="status-panel">
             <div className="status-row">
-              <span>{statusText}</span>
+              <span><b>{activeProject?.name}: </b>{statusText}</span>
               <strong>{Math.round(progress * 100)}%</strong>
             </div>
             <div className="progress-track" aria-label="Postęp uruchamiania asystenta">
               <div className="progress-bar" style={{ width: `${Math.round(progress * 100)}%` }} />
-            </div>
-            <div className="notice">
-              Aktywny kontekst: <strong>{activeProject?.name}</strong> / <strong>{activeChat?.title}</strong>. Długie odpowiedzi są zawijane i przewijane w obrębie wiadomości.
             </div>
             {hasWebGpu === false ? (
               <div className="notice warning">Uruchomienie wymaga nowszej przeglądarki z obsługą akceleracji WebGPU.</div>

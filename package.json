@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "NEXT_TELEMETRY_DISABLED=1 next dev",
-    "build": "NEXT_TELEMETRY_DISABLED=1 next build",
+    "dev": "next dev",
+    "build": "next build",
     "typecheck": "tsc --noEmit",
-    "deploy": "firebase deploy --only hosting"
+    "deploy": "firebase deploy --only hosting",
+    "codex": "git pull && yarn build && yarn deploy"
   },
   "dependencies": {
     "@mlc-ai/web-llm": "^0.2.79",
