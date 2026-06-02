@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@mlc-ai/web-llm": "^0.2.79",
+    "firebase": "^12.14.0",
     "next": "^15.3.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
