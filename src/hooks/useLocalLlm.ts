@@ -15,7 +15,7 @@ type GenerateOptions = {
   onToken: (token: string) => void
 }
 
-const defaultModelId = 'Llama-3.2-1B-Instruct-q4f16_1-MLC'
+const defaultModelId = 'Llama-3.2-3B-Instruct-q4f16_1-MLC'
 
 export function useLocalLlm() {
   const engineRef = useRef<MLCEngineInterface | null>(null)
@@ -75,8 +75,10 @@ export function useLocalLlm() {
       const stream = await engineRef.current.chat.completions.create({
         messages: messages as ChatCompletionMessageParam[],
         stream: true,
-        temperature: 0.7,
-        max_tokens: 768
+        temperature: 0.45,
+        top_p: 0.9,
+        repetition_penalty: 1.08,
+        max_tokens: 1024
       })
       for await (const chunk of stream) {
         const token = chunk.choices[0]?.delta.content || ''
