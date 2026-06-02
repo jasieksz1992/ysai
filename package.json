@@ -1,0 +1,24 @@
+{
+  "name": "ysai-local-llm",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "NEXT_TELEMETRY_DISABLED=1 next dev",
+    "build": "NEXT_TELEMETRY_DISABLED=1 next build",
+    "typecheck": "tsc --noEmit",
+    "deploy": "firebase deploy --only hosting"
+  },
+  "dependencies": {
+    "@mlc-ai/web-llm": "^0.2.79",
+    "next": "^15.3.3",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.29",
+    "@types/react": "^19.1.6",
+    "@types/react-dom": "^19.1.5",
+    "firebase-tools": "^14.4.0",
+    "typescript": "^5.8.3"
+  }
+}
