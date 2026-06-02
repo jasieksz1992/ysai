@@ -16,6 +16,7 @@ Your site AI to statyczna aplikacja Next.js z App Routerem, TypeScriptem i lokal
 - npm
 - Przeglądarka z WebGPU, na przykład aktualny Chrome albo Edge
 - Opcjonalnie Firebase CLI do wdrożenia
+- Projekt Firebase z włączonym logowaniem Email/Password, jeśli chcesz odblokować pisanie w chacie
 
 ## Instalacja
 
@@ -45,6 +46,25 @@ npm run build
 
 Next.js jest skonfigurowany z `output: 'export'`, więc po buildzie statyczne pliki są dostępne w katalogu `out`.
 
+## Konfiguracja Firebase Auth
+
+Aplikacja pokazuje interfejs czatu każdemu użytkownikowi, ale przed wysłaniem pierwszej wiadomości wymaga logowania przez Firebase Auth. Przepływ jest dwuetapowy: po próbie pisania użytkownik podaje e-mail, a dopiero potem hasło.
+
+1. W konsoli Firebase włącz Authentication → Sign-in method → Email/Password.
+2. Dodaj użytkowników, którzy mają mieć możliwość pisania w chacie.
+3. Ustaw publiczną konfigurację Firebase w zmiennych środowiskowych Next.js:
+
+```bash
+NEXT_PUBLIC_FIREBASE_API_KEY=...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
+NEXT_PUBLIC_FIREBASE_APP_ID=...
+```
+
+Bez tych zmiennych aplikacja nadal się zbuduje i pokaże chat, ale logowanie wyświetli komunikat o brakującej konfiguracji Firebase.
+
 ## Konfiguracja Firebase Hosting
 
 1. Utwórz projekt Firebase w konsoli Firebase.
@@ -73,7 +93,8 @@ Skrypt `deploy` uruchamia `firebase deploy --only hosting`. Plik `firebase.json`
 ## Struktura
 
 - `src/app/page.tsx` renderuje pojedynczy ekran czatu.
-- `src/components/LocalLlmChat.tsx` zawiera interfejs czatu, osobowość asystenta, listę umiejętności i stany UI.
+- `src/components/LocalLlmChat.tsx` zawiera interfejs czatu, osobowość asystenta, listę umiejętności, logowanie Firebase i stany UI.
+- `src/lib/firebase.ts` inicjuje Firebase Auth po stronie klienta na podstawie zmiennych `NEXT_PUBLIC_FIREBASE_*`.
 - `src/hooks/useLocalLlm.ts` izoluje ładowanie modelu, streaming i zatrzymywanie generowania.
 - `src/app/globals.css` definiuje ciemny, premium wygląd aplikacji.
 - `next.config.ts` włącza statyczny export.
