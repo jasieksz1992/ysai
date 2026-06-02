@@ -36,14 +36,14 @@ export function useLocalLlm() {
       return
     }
     if (hasWebGpu === false) {
-      setError('Twoja przeglądarka nie obsługuje WebGPU. Spróbuj aktualnej wersji Chrome, Edge albo innej przeglądarki z WebGPU.')
+      setError('Twoja przeglądarka nie obsługuje wymaganej akceleracji WebGPU. Spróbuj aktualnej wersji Chrome, Edge albo innej nowoczesnej przeglądarki.')
       setLoadState('error')
       return
     }
     setError('')
     setLoadState('loading')
     setProgress(0)
-    setProgressText('Przygotowywanie WebLLM...')
+    setProgressText('Przygotowywanie silnika AI...')
     try {
       const webllm = await import('@mlc-ai/web-llm')
       const engine = await webllm.CreateMLCEngine(modelId, {
