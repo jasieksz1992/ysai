@@ -128,6 +128,9 @@ const normalizeWorkspace = (workspace: StoredWorkspace): StoredWorkspace => {
 export default function LocalLlmChat() {
   const [workspace, setWorkspace] = useState<StoredWorkspace>(() => createDefaultWorkspace())
   const [input, setInput] = useState('')
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null)
+  const [projectNameDraft, setProjectNameDraft] = useState('')
+  const [projectRenameError, setProjectRenameError] = useState('')
   const [storageLoaded, setStorageLoaded] = useState(false)
   const [authUser, setAuthUser] = useState<User | null>(null)
   const [authLoaded, setAuthLoaded] = useState(false)
@@ -461,6 +464,45 @@ export default function LocalLlmChat() {
     setInput('')
   }
 
+  const startProjectRename = (project: StoredProject) => {
+    if (isGenerating) {
+      return
+    }
+    setEditingProjectId(project.id)
+    setProjectNameDraft(project.name)
+    setProjectRenameError('')
+  }
+
+  const cancelProjectRename = () => {
+    setEditingProjectId(null)
+    setProjectNameDraft('')
+    setProjectRenameError('')
+  }
+
+  const renameProject = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!editingProjectId || isGenerating) {
+      return
+    }
+
+    const nextName = projectNameDraft.trim()
+    if (!nextName) {
+      setProjectRenameError('Nazwa projektu nie może być pusta.')
+      return
+    }
+
+    const now = new Date().toISOString()
+    setWorkspace(currentWorkspace => ({
+      ...currentWorkspace,
+      projects: currentWorkspace.projects.map(project => project.id === editingProjectId ? {
+        ...project,
+        name: nextName,
+        updatedAt: now
+      } : project)
+    }))
+    cancelProjectRename()
+  }
+
   const selectProject = (projectId: string) => {
     if (isGenerating) {
       return
@@ -503,17 +545,55 @@ export default function LocalLlmChat() {
           </div>
 
           <div className="project-list">
-            {workspace.projects.map(project => (
-              <button
-                className={`project-item ${project.id === activeProject?.id ? 'active' : ''}`}
-                key={project.id}
-                type="button"
-                onClick={() => selectProject(project.id)}
-                disabled={isGenerating}
-              >
-                <span>{project.name}</span>
-                <small>{project.chats.length} chat{project.chats.length === 1 ? '' : 'y'}</small>
-              </button>
+            {workspace.projects.map(project => editingProjectId === project.id ? (
+              <form className="project-rename-form" key={project.id} onSubmit={renameProject}>
+                <label className="project-rename-field">
+                  <span>Zmień nazwę projektu</span>
+                  <input
+                    autoFocus
+                    type="text"
+                    value={projectNameDraft}
+                    onChange={event => {
+                      setProjectNameDraft(event.target.value)
+                      setProjectRenameError('')
+                    }}
+                    maxLength={80}
+                    disabled={isGenerating}
+                    aria-invalid={projectRenameError ? 'true' : 'false'}
+                  />
+                </label>
+                {projectRenameError ? <small className="project-rename-error">{projectRenameError}</small> : null}
+                <div className="project-rename-actions">
+                  <button className="button secondary project-rename-button" type="button" onClick={cancelProjectRename}>
+                    Anuluj
+                  </button>
+                  <button className="button project-rename-button" type="submit" disabled={isGenerating}>
+                    Zapisz
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div className={`project-item ${project.id === activeProject?.id ? 'active' : ''}`} key={project.id}>
+                <button
+                  className="project-select-button"
+                  type="button"
+                  onClick={() => selectProject(project.id)}
+                  disabled={isGenerating}
+                >
+                  <span>{project.name}</span>
+                  <small>{project.chats.length} chat{project.chats.length === 1 ? '' : 'y'}</small>
+                </button>
+                <button
+                  className="project-edit-button"
+                  type="button"
+                  onClick={() => startProjectRename(project)}
+                  disabled={isGenerating}
+                  aria-label={`Zmień nazwę projektu ${project.name}`}
+                  title="Zmień nazwę projektu"
+                >
+                  Edytuj
+                </button>
+              </div>
             ))}
           </div>
 

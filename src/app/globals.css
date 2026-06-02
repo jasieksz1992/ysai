@@ -788,3 +788,95 @@ textarea:focus {
     flex: 1;
   }
 }
+
+.project-item {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.project-select-button {
+  min-width: 0;
+  padding: 0;
+  display: grid;
+  gap: 5px;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+}
+
+.project-select-button:disabled,
+.project-edit-button:disabled {
+  cursor: not-allowed;
+}
+
+.project-edit-button {
+  min-height: 34px;
+  padding: 0 11px;
+  color: var(--primary-light);
+  background: rgba(139, 92, 246, 0.16);
+  border: 1px solid rgba(196, 181, 253, 0.24);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.74rem;
+  font-weight: 900;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.project-edit-button:hover:not(:disabled) {
+  color: #ffffff;
+  background: rgba(139, 92, 246, 0.3);
+  border-color: rgba(196, 181, 253, 0.46);
+}
+
+.project-rename-form {
+  padding: 13px 14px;
+  display: grid;
+  gap: 10px;
+  background: rgba(139, 92, 246, 0.14);
+  border: 1px solid rgba(196, 181, 253, 0.4);
+  border-radius: 18px;
+}
+
+.project-rename-field {
+  display: grid;
+  gap: 7px;
+  color: var(--muted-strong);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.project-rename-field input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  color: var(--foreground);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.project-rename-field input:focus {
+  background: rgba(255, 255, 255, 0.11);
+  border-color: rgba(196, 181, 253, 0.72);
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.18);
+}
+
+.project-rename-error {
+  color: #fecdd3;
+  font-weight: 800;
+}
+
+.project-rename-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.project-rename-button {
+  min-height: 38px;
+  padding: 0 12px;
+  font-size: 0.78rem;
+}
