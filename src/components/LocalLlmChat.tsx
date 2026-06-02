@@ -1,6 +1,8 @@
 'use client'
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react'
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from 'firebase/auth'
+import { getFirebaseAuth, hasFirebaseConfig } from '@/lib/firebase'
 import { useLocalLlm } from '@/hooks/useLocalLlm'
 import { assistantSkillLabels, buildSystemPrompt } from '@/lib/assistantSkills'
 import type { ChatMessage } from '@/hooks/useLocalLlm'
@@ -8,6 +10,8 @@ import type { ChatMessage } from '@/hooks/useLocalLlm'
 const workspaceStorageKey = 'ysai-local-llm-workspace'
 const legacyStorageKey = 'ysai-local-llm-chat-history'
 const assistantSkills = assistantSkillLabels
+
+type AuthStep = 'idle' | 'email' | 'password'
 
 type StoredChat = {
   id: string
@@ -125,6 +129,13 @@ export default function LocalLlmChat() {
   const [workspace, setWorkspace] = useState<StoredWorkspace>(() => createDefaultWorkspace())
   const [input, setInput] = useState('')
   const [storageLoaded, setStorageLoaded] = useState(false)
+  const [authUser, setAuthUser] = useState<User | null>(null)
+  const [authLoaded, setAuthLoaded] = useState(false)
+  const [authStep, setAuthStep] = useState<AuthStep>('idle')
+  const [authEmail, setAuthEmail] = useState('')
+  const [authPassword, setAuthPassword] = useState('')
+  const [authError, setAuthError] = useState('')
+  const [isSigningIn, setIsSigningIn] = useState(false)
   const endRef = useRef<HTMLDivElement | null>(null)
   const {
     loadState,
@@ -141,6 +152,26 @@ export default function LocalLlmChat() {
   const activeProject = getActiveProject(workspace)
   const activeChat = getActiveChat(workspace)
   const messages = activeChat?.messages ?? []
+
+  useEffect(() => {
+    const auth = getFirebaseAuth()
+    if (!auth) {
+      setAuthLoaded(true)
+      return undefined
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, user => {
+      setAuthUser(user)
+      setAuthLoaded(true)
+      if (user) {
+        setAuthStep('idle')
+        setAuthPassword('')
+        setAuthError('')
+      }
+    })
+
+    return unsubscribe
+  }, [])
 
   useEffect(() => {
     try {
@@ -228,10 +259,87 @@ export default function LocalLlmChat() {
     })
   }
 
-  const canSend = loadState === 'ready' && input.trim().length > 0 && !isGenerating
+  const canWriteMessage = Boolean(authUser)
+  const canSend = loadState === 'ready' && input.trim().length > 0 && !isGenerating && canWriteMessage
+
+  const getAuthErrorMessage = (signInError: unknown) => {
+    if (!hasFirebaseConfig) {
+      return 'Brakuje konfiguracji Firebase. Uzupełnij zmienne NEXT_PUBLIC_FIREBASE_* i wdroż aplikację ponownie.'
+    }
+    if (signInError instanceof Error) {
+      if (signInError.message.includes('auth/invalid-credential') || signInError.message.includes('auth/wrong-password')) {
+        return 'Nieprawidłowy e-mail lub hasło.'
+      }
+      if (signInError.message.includes('auth/user-not-found')) {
+        return 'Nie znaleziono użytkownika z tym adresem e-mail.'
+      }
+      if (signInError.message.includes('auth/too-many-requests')) {
+        return 'Za dużo prób logowania. Spróbuj ponownie za chwilę.'
+      }
+    }
+    return 'Nie udało się zalogować przez Firebase. Sprawdź dane i spróbuj ponownie.'
+  }
+
+  const requestChatAccess = () => {
+    if (!authLoaded || authUser) {
+      return
+    }
+    setAuthError('')
+    setAuthStep(currentStep => currentStep === 'idle' ? 'email' : currentStep)
+  }
+
+  const handleAuthSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setAuthError('')
+
+    if (authStep === 'email') {
+      if (!authEmail.trim()) {
+        setAuthError('Podaj adres e-mail, aby przejść dalej.')
+        return
+      }
+      setAuthStep('password')
+      return
+    }
+
+    if (!authPassword) {
+      setAuthError('Podaj hasło do konta Firebase.')
+      return
+    }
+
+    const auth = getFirebaseAuth()
+    if (!auth) {
+      setAuthError(getAuthErrorMessage(new Error('Firebase config missing')))
+      return
+    }
+
+    setIsSigningIn(true)
+    try {
+      await signInWithEmailAndPassword(auth, authEmail.trim(), authPassword)
+    } catch (signInError) {
+      setAuthError(getAuthErrorMessage(signInError))
+    } finally {
+      setIsSigningIn(false)
+    }
+  }
+
+  const handleSignOut = async () => {
+    if (isGenerating) {
+      return
+    }
+    const auth = getFirebaseAuth()
+    if (auth) {
+      await signOut(auth)
+    }
+    setAuthStep('idle')
+    setAuthPassword('')
+  }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!canWriteMessage) {
+      requestChatAccess()
+      return
+    }
     if (!canSend) {
       return
     }
@@ -453,6 +561,11 @@ export default function LocalLlmChat() {
               <button className="button secondary" type="button" onClick={createNewChat} disabled={isGenerating}>
                 Nowy chat
               </button>
+              {authUser ? (
+                <button className="button secondary" type="button" onClick={handleSignOut} disabled={isGenerating}>
+                  Wyloguj {authUser.email}
+                </button>
+              ) : null}
               <button className="button danger" type="button" onClick={clearChat} disabled={messages.length === 0 || isGenerating}>
                 Wyczyść
               </button>
@@ -468,6 +581,9 @@ export default function LocalLlmChat() {
             </div>
             <div className="notice">
               Aktywny kontekst: <strong>{activeProject?.name}</strong> / <strong>{activeChat?.title}</strong>. Długie odpowiedzi są zawijane i przewijane w obrębie wiadomości.
+            </div>
+            <div className={`notice ${authUser ? '' : 'warning'}`}>
+              Dostęp do pisania: {authUser ? <strong>zalogowano jako {authUser.email}</strong> : 'chat jest widoczny, ale przed wysłaniem wiadomości poprosimy o e-mail, a potem hasło Firebase.'}
             </div>
             {hasWebGpu === false ? (
               <div className="notice warning">Uruchomienie wymaga nowszej przeglądarki z obsługą akceleracji WebGPU.</div>
@@ -491,12 +607,59 @@ export default function LocalLlmChat() {
             )}
             <div ref={endRef} />
           </div>
+          {!authUser && authStep !== 'idle' ? (
+            <form className="auth-panel" onSubmit={handleAuthSubmit}>
+              <div>
+                <p className="auth-kicker">Bezpieczny dostęp Firebase</p>
+                <h2>{authStep === 'email' ? 'Najpierw podaj e-mail' : 'Teraz wpisz hasło'}</h2>
+                <p>
+                  Your site AI pozostaje widoczny, ale pisanie w chacie wymaga zalogowania do konta Firebase.
+                </p>
+              </div>
+              <label className="auth-field">
+                <span>E-mail</span>
+                <input
+                  type="email"
+                  value={authEmail}
+                  onChange={event => setAuthEmail(event.target.value)}
+                  autoComplete="email"
+                  disabled={authStep === 'password' || isSigningIn}
+                  placeholder="twoj@email.pl"
+                />
+              </label>
+              {authStep === 'password' ? (
+                <label className="auth-field">
+                  <span>Hasło</span>
+                  <input
+                    type="password"
+                    value={authPassword}
+                    onChange={event => setAuthPassword(event.target.value)}
+                    autoComplete="current-password"
+                    disabled={isSigningIn}
+                    placeholder="Hasło Firebase"
+                  />
+                </label>
+              ) : null}
+              {authError ? <div className="notice error">{authError}</div> : null}
+              <div className="auth-actions">
+                {authStep === 'password' ? (
+                  <button className="button secondary" type="button" onClick={() => setAuthStep('email')} disabled={isSigningIn}>
+                    Zmień e-mail
+                  </button>
+                ) : null}
+                <button className="button" type="submit" disabled={isSigningIn || !authLoaded}>
+                  {authStep === 'email' ? 'Dalej' : isSigningIn ? 'Logowanie...' : 'Zaloguj i odblokuj chat'}
+                </button>
+              </div>
+            </form>
+          ) : null}
           <form className="composer" onSubmit={handleSubmit}>
             <div className="input-row">
               <textarea
                 value={input}
                 onChange={event => setInput(event.target.value)}
-                placeholder={loadState === 'ready' ? 'Napisz, co chcesz zbudować albo poprawić...' : 'AI uruchamia się automatycznie — poczekaj chwilę...'}
+                onFocus={requestChatAccess}
+                placeholder={authUser ? (loadState === 'ready' ? 'Napisz, co chcesz zbudować albo poprawić...' : 'AI uruchamia się automatycznie — poczekaj chwilę...') : 'Kliknij i wpisz wiadomość — przed wysłaniem poprosimy o e-mail, a potem hasło.'}
                 disabled={loadState !== 'ready' || isGenerating}
                 aria-label="Treść wiadomości"
               />
@@ -505,8 +668,8 @@ export default function LocalLlmChat() {
                   Zatrzymaj
                 </button>
               ) : (
-                <button className="button" type="submit" disabled={!canSend}>
-                  Wyślij
+                <button className="button" type="submit" disabled={authUser ? !canSend : loadState !== 'ready' || input.trim().length === 0}>
+                  {authUser ? 'Wyślij' : 'Zaloguj, aby wysłać'}
                 </button>
               )}
             </div>

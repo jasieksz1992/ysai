@@ -52,6 +52,12 @@ export const assistantSkillProfiles: AssistantSkillProfile[] = [
     instructions: `Skill UI/UX: proponuj dopracowaną hierarchię, copy, odstępy, stany interakcji i dostępność. Odpowiedź ma być praktyczna: co zmienić, gdzie i jaki będzie efekt.`
   },
   {
+    id: 'ai-photo-direction',
+    label: 'Zdjęcia AI',
+    triggers: ['zdjęcie', 'zdjecie', 'photo', 'fotografia', 'image prompt', 'prompt obrazu', 'midjourney', 'dall-e', 'dalle', 'sesja zdjęciowa', 'wizual'],
+    instructions: `Skill Zdjęcia AI: twórz jakościowe koncepcje fotograficzne, prompty obrazów, shot listy, notatki stylistyczne i produkcyjne opisy gotowe dla generatorów wizualnych.`
+  },
+  {
     id: 'debugging',
     label: 'Debugowanie',
     triggers: ['błąd', 'blad', 'error', 'bug', 'nie działa', 'crash', 'problem', 'napraw', 'debug'],
